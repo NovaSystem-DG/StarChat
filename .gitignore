@@ -1,0 +1,22 @@
+# Secretos — NUNCA subir
+.env
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.venv/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
