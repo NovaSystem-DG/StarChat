@@ -1,78 +1,60 @@
 import os
-import libsql_experimental as libsql
+import requests
 
-TURSO_URL   = os.getenv("TURSO_DATABASE_URL")
-TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN")
+TURSO_URL   = os.getenv("TURSO_DATABASE_URL", "").replace("libsql://", "https://")
+TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 
-class DBWrapper:
-    """Wrapper para que funcione el 'with get_db() as db:' igual que antes"""
-    def __init__(self, conn):
-        self._conn = conn
+def _execute(statements):
+    """Ejecuta una lista de statements en Turso via HTTP"""
+    payload = {"requests": []}
+    for stmt in statements:
+        if isinstance(stmt, str):
+            payload["requests"].append({"type": "execute", "stmt": {"sql": stmt}})
+        else:
+            sql, params = stmt
+            args = []
+            for p in params:
+                if p is None:
+                    args.append({"type": "null"})
+                elif isinstance(p, int):
+                    args.append({"type": "integer", "value": str(p)})
+                elif isinstance(p, float):
+                    args.append({"type": "float", "value": str(p)})
+                else:
+                    args.append({"type": "text", "value": str(p)})
+            payload["requests"].append({
+                "type": "execute",
+                "stmt": {"sql": sql, "args": args}
+            })
+    payload["requests"].append({"type": "close"})
 
-    def execute(self, sql, params=()):
-        cur = self._conn.execute(sql, params)
-        return RowWrapper(cur, self._conn)
-
-    def executescript(self, sql):
-        # Turso no tiene executescript, ejecutamos statement por statement
-        for stmt in sql.split(';'):
-            stmt = stmt.strip()
-            if stmt:
-                self._conn.execute(stmt)
-
-    def commit(self):
-        self._conn.commit()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self._conn.commit()
-
-
-class RowWrapper:
-    """Wrapper para que las filas soporten dict() y acceso por nombre"""
-    def __init__(self, cursor, conn):
-        self._cur = cursor
-        self._conn = conn
-        self._description = cursor.description if hasattr(cursor, 'description') else None
-
-    @property
-    def lastrowid(self):
-        return self._cur.lastrowid
-
-    @property
-    def description(self):
-        return self._description
-
-    def fetchone(self):
-        row = self._cur.fetchone()
-        if row is None:
-            return None
-        return DictRow(row, self._description)
-
-    def fetchall(self):
-        rows = self._cur.fetchall()
-        return [DictRow(r, self._description) for r in rows]
+    r = requests.post(
+        f"{TURSO_URL}/v2/pipeline",
+        headers={
+            "Authorization": f"Bearer {TURSO_TOKEN}",
+            "Content-Type": "application/json"
+        },
+        json=payload,
+        timeout=10
+    )
+    r.raise_for_status()
+    return r.json().get("results", [])
 
 
 class DictRow:
-    """Fila que soporta acceso por nombre (row['campo']) y dict(row)"""
-    def __init__(self, row, description):
-        self._row  = row
-        self._keys = [d[0] for d in description] if description else []
-        self._data = dict(zip(self._keys, row)) if self._keys else {}
+    def __init__(self, data):
+        self._data = data
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self._row[key]
+            return list(self._data.values())[key]
         return self._data[key]
 
     def get(self, key, default=None):
         return self._data.get(key, default)
 
     def keys(self):
-        return self._keys
+        return self._data.keys()
 
     def __iter__(self):
         return iter(self._data)
@@ -84,12 +66,68 @@ class DictRow:
         return key in self._data
 
 
+class Cursor:
+    def __init__(self, result):
+        self._rows = []
+        self.lastrowid = None
+
+        if result and result.get("type") == "ok":
+            response = result.get("response", {})
+            inner = response.get("result", {})
+
+            # lastrowid
+            self.lastrowid = inner.get("last_insert_rowid")
+
+            cols = [c["name"] for c in inner.get("cols", [])]
+            for row in inner.get("rows", []):
+                values = []
+                for cell in row:
+                    t = cell.get("type")
+                    v = cell.get("value")
+                    if t == "null" or v is None:
+                        values.append(None)
+                    elif t == "integer":
+                        values.append(int(v))
+                    elif t == "float":
+                        values.append(float(v))
+                    else:
+                        values.append(v)
+                self._rows.append(DictRow(dict(zip(cols, values))))
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self):
+        return self._rows
+
+
+class DBWrapper:
+    def __init__(self):
+        self._stmts = []
+        self._last_cursor = Cursor({})
+
+    def execute(self, sql, params=()):
+        results = _execute([(sql, params)])
+        self._last_cursor = Cursor(results[0] if results else {})
+        return self._last_cursor
+
+    def executescript(self, sql):
+        stmts = [s.strip() for s in sql.split(";") if s.strip()]
+        if stmts:
+            _execute(stmts)
+
+    def commit(self):
+        pass  # Turso HTTP es auto-commit
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+
 def get_db():
-    conn = libsql.connect(
-        database=TURSO_URL,
-        auth_token=TURSO_TOKEN,
-    )
-    return DBWrapper(conn)
+    return DBWrapper()
 
 
 def init_db():
