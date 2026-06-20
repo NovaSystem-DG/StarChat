@@ -1,21 +1,26 @@
 import os
 import requests
+import json
 
 TURSO_URL   = os.getenv("TURSO_DATABASE_URL", "").replace("libsql://", "https://")
 TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 
 def _execute(statements):
-    """Ejecuta una lista de statements en Turso via HTTP"""
     payload = {"requests": []}
     for stmt in statements:
         if isinstance(stmt, str):
-            payload["requests"].append({"type": "execute", "stmt": {"sql": stmt}})
+            payload["requests"].append({
+                "type": "execute",
+                "stmt": {"sql": stmt}
+            })
         else:
             sql, params = stmt
             args = []
             for p in params:
                 if p is None:
                     args.append({"type": "null"})
+                elif isinstance(p, bool):
+                    args.append({"type": "integer", "value": "1" if p else "0"})
                 elif isinstance(p, int):
                     args.append({"type": "integer", "value": str(p)})
                 elif isinstance(p, float):
@@ -34,10 +39,13 @@ def _execute(statements):
             "Authorization": f"Bearer {TURSO_TOKEN}",
             "Content-Type": "application/json"
         },
-        json=payload,
-        timeout=10
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        timeout=15
     )
-    r.raise_for_status()
+
+    if not r.ok:
+        raise Exception(f"Turso error {r.status_code}: {r.text[:300]}")
+
     return r.json().get("results", [])
 
 
@@ -71,28 +79,32 @@ class Cursor:
         self._rows = []
         self.lastrowid = None
 
-        if result and result.get("type") == "ok":
-            response = result.get("response", {})
-            inner = response.get("result", {})
+        if not result:
+            return
 
-            # lastrowid
-            self.lastrowid = inner.get("last_insert_rowid")
+        if result.get("type") == "error":
+            raise Exception(f"Turso query error: {result.get('error', {}).get('message', 'unknown')}")
 
-            cols = [c["name"] for c in inner.get("cols", [])]
-            for row in inner.get("rows", []):
-                values = []
-                for cell in row:
-                    t = cell.get("type")
-                    v = cell.get("value")
-                    if t == "null" or v is None:
-                        values.append(None)
-                    elif t == "integer":
-                        values.append(int(v))
-                    elif t == "float":
-                        values.append(float(v))
-                    else:
-                        values.append(v)
-                self._rows.append(DictRow(dict(zip(cols, values))))
+        response = result.get("response", {})
+        inner = response.get("result", {})
+
+        self.lastrowid = inner.get("last_insert_rowid")
+
+        cols = [c["name"] for c in inner.get("cols", [])]
+        for row in inner.get("rows", []):
+            values = []
+            for cell in row:
+                t = cell.get("type")
+                v = cell.get("value")
+                if t == "null" or v is None:
+                    values.append(None)
+                elif t == "integer":
+                    values.append(int(v))
+                elif t == "float":
+                    values.append(float(v))
+                else:
+                    values.append(v)
+            self._rows.append(DictRow(dict(zip(cols, values))))
 
     def fetchone(self):
         return self._rows[0] if self._rows else None
@@ -102,14 +114,9 @@ class Cursor:
 
 
 class DBWrapper:
-    def __init__(self):
-        self._stmts = []
-        self._last_cursor = Cursor({})
-
     def execute(self, sql, params=()):
         results = _execute([(sql, params)])
-        self._last_cursor = Cursor(results[0] if results else {})
-        return self._last_cursor
+        return Cursor(results[0] if results else None)
 
     def executescript(self, sql):
         stmts = [s.strip() for s in sql.split(";") if s.strip()]
@@ -117,7 +124,7 @@ class DBWrapper:
             _execute(stmts)
 
     def commit(self):
-        pass  # Turso HTTP es auto-commit
+        pass
 
     def __enter__(self):
         return self
