@@ -1,272 +1,283 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>StarChat</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>StarChat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
-<div class="app">
-  <!-- ══ PANEL IZQUIERDO (lista de personajes) ══ -->
-  <div class="panel-left" id="panelLeft">
-    <!-- Header -->
-    <div class="left-header">
-      <div class="left-header-top">
-        <div class="user-avatar" id="userAvatar" onclick="openSettings()"></div>
-        <span class="app-title">StarChat</span>
-        <div class="left-actions">
-          <button class="icon-btn" onclick="openSettings()" title="Ajustes"><i class="fas fa-cog"></i></button>
-          <button class="icon-btn accent" onclick="openCharModal()" title="Nuevo personaje"><i class="fas fa-plus"></i></button>
+  <div class="app">
+    <!-- ══ PANEL IZQUIERDO (lista de personajes) ══ -->
+    <div class="panel-left" id="panelLeft">
+      <!-- Header -->
+      <div class="left-header">
+        <div class="left-header-top">
+          <div class="user-avatar" id="userAvatar" onclick="openSettings()"></div>
+          <span class="app-title">StarChat</span>
+          <div class="left-actions">
+            <button class="icon-btn" onclick="openSettings()" title="Ajustes"><i class="fas fa-cog"></i></button>
+            <button class="icon-btn accent" onclick="openCharModal()" title="Nuevo personaje"><i
+                class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="search-wrap">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" placeholder="Buscar personaje..." id="searchInput" oninput="filterChars()">
         </div>
       </div>
-      <div class="search-wrap">
-        <i class="fas fa-magnifying-glass"></i>
-        <input type="text" placeholder="Buscar personaje..." id="searchInput" oninput="filterChars()">
-      </div>
+
+      <!-- Char list -->
+      <div class="char-list" id="charList"></div>
     </div>
 
-    <!-- Char list -->
-    <div class="char-list" id="charList"></div>
+    <!-- ══ PANEL DERECHO (chat) ══ -->
+    <div class="panel-right" id="panelRight">
+      <!-- Welcome -->
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-inner">
+          <div class="welcome-emoji">💬</div>
+          <h2>StarChat</h2>
+          <p>Selecciona un personaje para empezar tu historia</p>
+          <button class="btn-pill" onclick="openCharModal()">
+            <i class="fas fa-plus"></i> Crear personaje
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat view (hidden until char selected) -->
+      <div class="chat-view hidden" id="chatView">
+        <!-- Chat header -->
+        <div class="chat-header">
+          <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+          <div class="chat-header-avatar" id="chatHeaderAvatar"></div>
+          <div class="chat-header-info" onclick="openChatHistory()">
+            <div class="chat-header-name" id="chatHeaderName"></div>
+            <div class="chat-header-sub" id="chatHeaderSub"></div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn" id="favBtn" onclick="toggleFav()" title="Favorito"><i
+                class="fas fa-star"></i></button>
+            <button class="icon-btn" onclick="openChatHistory()" title="Conversaciones"><i
+                class="fas fa-clock-rotate-left"></i></button>
+            <button class="icon-btn" onclick="openCharMenu()" title="Más opciones"><i
+                class="fas fa-ellipsis-vertical"></i></button>
+          </div>
+        </div>
+
+        <!-- OC bar -->
+        <div class="oc-bar" id="ocBar">
+          <i class="fas fa-user-circle" style="color:var(--text3);font-size:.85rem;"></i>
+          <label>Jugar como:</label>
+          <select id="ocSelect" onchange="onOcChange()">
+            <option value="">Yo mismo</option>
+          </select>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages" id="messages"></div>
+
+        <!-- Input -->
+        <div class="input-wrap-area">
+          <textarea class="msg-input" id="msgInput" placeholder="Escribe un mensaje..." rows="1"
+            onkeydown="onMsgKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- ══ PANEL DERECHO (chat) ══ -->
-  <div class="panel-right" id="panelRight">
-    <!-- Welcome -->
-    <div class="welcome" id="welcomeScreen">
-      <div class="welcome-inner">
-        <div class="welcome-emoji">💬</div>
-        <h2>StarChat</h2>
-        <p>Selecciona un personaje para empezar tu historia</p>
-        <button class="btn-pill" onclick="openCharModal()">
-          <i class="fas fa-plus"></i> Crear personaje
-        </button>
-      </div>
+  <!-- ══ CHAR MENU DROPDOWN ══ -->
+  <div class="dropdown hidden" id="charMenu">
+    <button onclick="editCurrentChar()"><i class="fas fa-pen"></i> Editar personaje</button>
+    <button onclick="clearCurrentChat()"><i class="fas fa-broom"></i> Vaciar chat</button>
+    <button onclick="newChatForChar()"><i class="fas fa-plus"></i> Nueva conversación</button>
+    <button class="danger" onclick="deleteCurrentChar()"><i class="fas fa-trash"></i> Eliminar personaje</button>
+  </div>
+
+  <!-- ══ SETTINGS PANEL ══ -->
+  <div class="overlay hidden" id="settingsOverlay" onclick="closeSettings()"></div>
+  <div class="settings-panel hidden" id="settingsPanel">
+    <div class="sp-header">
+      <h3>Ajustes</h3>
+      <button class="icon-btn" onclick="closeSettings()"><i class="fas fa-times"></i></button>
     </div>
-
-    <!-- Chat view (hidden until char selected) -->
-    <div class="chat-view hidden" id="chatView">
-      <!-- Chat header -->
-      <div class="chat-header">
-        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-        <div class="chat-header-avatar" id="chatHeaderAvatar"></div>
-        <div class="chat-header-info" onclick="openChatHistory()">
-          <div class="chat-header-name" id="chatHeaderName"></div>
-          <div class="chat-header-sub" id="chatHeaderSub"></div>
+    <div class="sp-body">
+      <div class="sp-section-label">Tu perfil</div>
+      <div class="profile-area">
+        <div class="avatar-upload" onclick="document.getElementById('profileAvatarFile').click()">
+          <div class="avatar-preview" id="profileAvatarPreview"></div>
+          <div class="avatar-cam"><i class="fas fa-camera"></i></div>
         </div>
-        <div class="chat-header-actions">
-          <button class="icon-btn" id="favBtn" onclick="toggleFav()" title="Favorito"><i class="fas fa-star"></i></button>
-          <button class="icon-btn" onclick="openChatHistory()" title="Conversaciones"><i class="fas fa-clock-rotate-left"></i></button>
-          <button class="icon-btn" onclick="openCharMenu()" title="Más opciones"><i class="fas fa-ellipsis-vertical"></i></button>
+        <input type="file" id="profileAvatarFile" accept="image/*" style="display:none"
+          onchange="onProfileAvatarChange(event)">
+        <input class="text-input" id="profileName" placeholder="Tu nombre">
+        <button class="btn-primary" onclick="saveProfile()">Guardar</button>
+      </div>
+
+      <div class="sp-section-row">
+        <span class="sp-section-label" style="margin:0">Mis OCs</span>
+        <button class="btn-link" onclick="openOcModal()"><i class="fas fa-plus"></i> Nuevo OC</button>
+      </div>
+      <div id="ocListSettings"></div>
+
+      <div class="sp-section-label" style="margin-top:24px">Cuenta</div>
+      <button class="btn-danger-soft" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: PERSONAJE ══ -->
+  <div class="modal hidden" id="charModal">
+    <div class="modal-card wide">
+      <div class="modal-hd">
+        <h3 id="charModalTitle">Nuevo personaje</h3>
+        <button class="icon-btn" onclick="closeCharModal()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Avatar -->
+      <div class="modal-avatar-row">
+        <div class="avatar-upload" onclick="document.getElementById('charAvatarFile').click()">
+          <div class="avatar-preview big" id="charAvatarPreview">
+            <i class="fas fa-robot" style="font-size:1.8rem;color:var(--text3)"></i>
+          </div>
+          <div class="avatar-cam"><i class="fas fa-camera"></i></div>
+        </div>
+        <input type="file" id="charAvatarFile" accept="image/*" style="display:none"
+          onchange="onCharAvatarChange(event)">
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('basic',this)">Básico</button>
+        <button class="tab" onclick="switchTab('persona',this)">Personalidad</button>
+        <button class="tab" onclick="switchTab('advanced',this)">Avanzado</button>
+      </div>
+
+      <div class="tab-panel" id="tab-basic">
+        <div class="form-row">
+          <div class="form-col">
+            <label>Nombre *</label>
+            <input class="text-input" id="charName" placeholder="Ej: Tim Drake">
+          </div>
+          <div class="form-col">
+            <label>Rol corto</label>
+            <input class="text-input" id="charDesc" placeholder="Ej: Robin, genio táctico">
+          </div>
+        </div>
+        <label>Mensaje de bienvenida <span class="hint">(lo primero que dice)</span></label>
+        <textarea class="text-area" id="charGreeting" rows="3"
+          placeholder="*Levanta la vista del ordenador, serio* Llegas tarde."></textarea>
+      </div>
+
+      <div class="tab-panel hidden" id="tab-persona">
+        <label>Personalidad</label>
+        <textarea class="text-area" id="charPersonality" rows="4"
+          placeholder="Cómo habla, qué le gusta, sus manías, su forma de reaccionar..."></textarea>
+        <label>Historia / Lore</label>
+        <textarea class="text-area" id="charLore" rows="3"
+          placeholder="Trasfondo, pasado, motivaciones, su universo..."></textarea>
+      </div>
+
+      <div class="tab-panel hidden" id="tab-advanced">
+        <label>System override <span class="hint">(reemplaza el prompt completo — avanzado)</span></label>
+        <textarea class="text-area" id="charSystemOverride" rows="4"
+          placeholder="Dejar vacío para usar el sistema por defecto."></textarea>
+        <label>Ejemplos de diálogo <span class="hint">(few-shot)</span></label>
+        <textarea class="text-area" id="charExamples" rows="4"
+          placeholder="{{user}}: Hola&#10;{{char}}: *sin levantar la vista* ¿Qué quieres?"></textarea>
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-col">
+            <label>Temperatura <span class="hint">(<span id="charTempVal">0.92</span>)</span></label>
+            <input type="range" id="charTemp" min="0.1" max="1.5" step="0.05" value="0.92"
+              oninput="document.getElementById('charTempVal').textContent=this.value">
+          </div>
+          <div class="form-col">
+            <label>Máx. tokens</label>
+            <input class="text-input" type="number" id="charMaxTokens" value="600" min="100" max="2000" step="50">
+          </div>
         </div>
       </div>
 
-      <!-- OC bar -->
-      <div class="oc-bar" id="ocBar">
-        <i class="fas fa-user-circle" style="color:var(--text3);font-size:.85rem;"></i>
-        <label>Jugar como:</label>
-        <select id="ocSelect" onchange="onOcChange()">
-          <option value="">Yo mismo</option>
-        </select>
-      </div>
-
-      <!-- Messages -->
-      <div class="messages" id="messages"></div>
-
-      <!-- Input -->
-      <div class="input-wrap-area">
-        <textarea class="msg-input" id="msgInput"
-          placeholder="Escribe un mensaje..."
-          rows="1"
-          onkeydown="onMsgKey(event)"
-          oninput="autoResize(this)"></textarea>
-        <button class="send-btn" onclick="sendMessage()" id="sendBtn">
-          <i class="fas fa-paper-plane"></i>
-        </button>
+      <div class="modal-ft">
+        <button class="btn-cancel" onclick="closeCharModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveChar()"><i class="fas fa-check"></i> Guardar</button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ══ CHAR MENU DROPDOWN ══ -->
-<div class="dropdown hidden" id="charMenu">
-  <button onclick="editCurrentChar()"><i class="fas fa-pen"></i> Editar personaje</button>
-  <button onclick="clearCurrentChat()"><i class="fas fa-broom"></i> Vaciar chat</button>
-  <button onclick="newChatForChar()"><i class="fas fa-plus"></i> Nueva conversación</button>
-  <button class="danger" onclick="deleteCurrentChar()"><i class="fas fa-trash"></i> Eliminar personaje</button>
-</div>
-
-<!-- ══ SETTINGS PANEL ══ -->
-<div class="overlay hidden" id="settingsOverlay" onclick="closeSettings()"></div>
-<div class="settings-panel hidden" id="settingsPanel">
-  <div class="sp-header">
-    <h3>Ajustes</h3>
-    <button class="icon-btn" onclick="closeSettings()"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="sp-body">
-    <div class="sp-section-label">Tu perfil</div>
-    <div class="profile-area">
-      <div class="avatar-upload" onclick="document.getElementById('profileAvatarFile').click()">
-        <div class="avatar-preview" id="profileAvatarPreview"></div>
-        <div class="avatar-cam"><i class="fas fa-camera"></i></div>
+  <!-- ══ MODAL: OC ══ -->
+  <div class="modal hidden" id="ocModal">
+    <div class="modal-card">
+      <div class="modal-hd">
+        <h3 id="ocModalTitle">Nuevo OC</h3>
+        <button class="icon-btn" onclick="closeOcModal()"><i class="fas fa-times"></i></button>
       </div>
-      <input type="file" id="profileAvatarFile" accept="image/*" style="display:none" onchange="onProfileAvatarChange(event)">
-      <input class="text-input" id="profileName" placeholder="Tu nombre">
-      <button class="btn-primary" onclick="saveProfile()">Guardar</button>
-    </div>
-
-    <div class="sp-section-row">
-      <span class="sp-section-label" style="margin:0">Mis OCs</span>
-      <button class="btn-link" onclick="openOcModal()"><i class="fas fa-plus"></i> Nuevo OC</button>
-    </div>
-    <div id="ocListSettings"></div>
-
-    <div class="sp-section-label" style="margin-top:24px">Cuenta</div>
-    <button class="btn-danger-soft" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
-  </div>
-</div>
-
-<!-- ══ MODAL: PERSONAJE ══ -->
-<div class="modal hidden" id="charModal">
-  <div class="modal-card wide">
-    <div class="modal-hd">
-      <h3 id="charModalTitle">Nuevo personaje</h3>
-      <button class="icon-btn" onclick="closeCharModal()"><i class="fas fa-times"></i></button>
-    </div>
-
-    <!-- Avatar -->
-    <div class="modal-avatar-row">
-      <div class="avatar-upload" onclick="document.getElementById('charAvatarFile').click()">
-        <div class="avatar-preview big" id="charAvatarPreview">
-          <i class="fas fa-robot" style="font-size:1.8rem;color:var(--text3)"></i>
+      <div class="modal-avatar-row">
+        <div class="avatar-upload" onclick="document.getElementById('ocAvatarFile').click()">
+          <div class="avatar-preview big" id="ocAvatarPreview">
+            <i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>
+          </div>
+          <div class="avatar-cam"><i class="fas fa-camera"></i></div>
         </div>
-        <div class="avatar-cam"><i class="fas fa-camera"></i></div>
+        <input type="file" id="ocAvatarFile" accept="image/*" style="display:none" onchange="onOcAvatarChange(event)">
       </div>
-      <input type="file" id="charAvatarFile" accept="image/*" style="display:none" onchange="onCharAvatarChange(event)">
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('basic',this)">Básico</button>
-      <button class="tab" onclick="switchTab('persona',this)">Personalidad</button>
-      <button class="tab" onclick="switchTab('advanced',this)">Avanzado</button>
-    </div>
-
-    <div class="tab-panel" id="tab-basic">
-      <div class="form-row">
-        <div class="form-col">
-          <label>Nombre *</label>
-          <input class="text-input" id="charName" placeholder="Ej: Tim Drake">
-        </div>
-        <div class="form-col">
-          <label>Rol corto</label>
-          <input class="text-input" id="charDesc" placeholder="Ej: Robin, genio táctico">
-        </div>
-      </div>
-      <label>Mensaje de bienvenida <span class="hint">(lo primero que dice)</span></label>
-      <textarea class="text-area" id="charGreeting" rows="3" placeholder="*Levanta la vista del ordenador, serio* Llegas tarde."></textarea>
-    </div>
-
-    <div class="tab-panel hidden" id="tab-persona">
-      <label>Personalidad</label>
-      <textarea class="text-area" id="charPersonality" rows="4" placeholder="Cómo habla, qué le gusta, sus manías, su forma de reaccionar..."></textarea>
-      <label>Historia / Lore</label>
-      <textarea class="text-area" id="charLore" rows="3" placeholder="Trasfondo, pasado, motivaciones, su universo..."></textarea>
-    </div>
-
-    <div class="tab-panel hidden" id="tab-advanced">
-      <label>System override <span class="hint">(reemplaza el prompt completo — avanzado)</span></label>
-      <textarea class="text-area" id="charSystemOverride" rows="4" placeholder="Dejar vacío para usar el sistema por defecto."></textarea>
-      <label>Ejemplos de diálogo <span class="hint">(few-shot)</span></label>
-      <textarea class="text-area" id="charExamples" rows="4" placeholder="{{user}}: Hola&#10;{{char}}: *sin levantar la vista* ¿Qué quieres?"></textarea>
-      <div class="form-row" style="margin-top:8px">
-        <div class="form-col">
-          <label>Temperatura <span class="hint">(<span id="charTempVal">0.92</span>)</span></label>
-          <input type="range" id="charTemp" min="0.1" max="1.5" step="0.05" value="0.92"
-            oninput="document.getElementById('charTempVal').textContent=this.value">
-        </div>
-        <div class="form-col">
-          <label>Máx. tokens</label>
-          <input class="text-input" type="number" id="charMaxTokens" value="600" min="100" max="2000" step="50">
-        </div>
+      <input class="text-input" id="ocName" placeholder="Nombre del OC *">
+      <input class="text-input" id="ocRole" placeholder="Rol (ej: Estudiante, Héroe)">
+      <input class="text-input" id="ocAppearance" placeholder="Apariencia (ej: pelo negro, ojos grises)">
+      <textarea class="text-area" id="ocPersonality" rows="2" placeholder="Personalidad..."></textarea>
+      <textarea class="text-area" id="ocLore" rows="2" placeholder="Trasfondo..."></textarea>
+      <div class="modal-ft">
+        <button class="btn-cancel" onclick="closeOcModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveOc()"><i class="fas fa-check"></i> Guardar OC</button>
       </div>
     </div>
-
-    <div class="modal-ft">
-      <button class="btn-cancel" onclick="closeCharModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveChar()"><i class="fas fa-check"></i> Guardar</button>
-    </div>
   </div>
-</div>
 
-<!-- ══ MODAL: OC ══ -->
-<div class="modal hidden" id="ocModal">
-  <div class="modal-card">
-    <div class="modal-hd">
-      <h3 id="ocModalTitle">Nuevo OC</h3>
-      <button class="icon-btn" onclick="closeOcModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-avatar-row">
-      <div class="avatar-upload" onclick="document.getElementById('ocAvatarFile').click()">
-        <div class="avatar-preview big" id="ocAvatarPreview">
-          <i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>
-        </div>
-        <div class="avatar-cam"><i class="fas fa-camera"></i></div>
+  <!-- ══ MODAL: HISTORIAL ══ -->
+  <div class="modal hidden" id="historyModal">
+    <div class="modal-card">
+      <div class="modal-hd">
+        <h3>Conversaciones</h3>
+        <button class="icon-btn" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
       </div>
-      <input type="file" id="ocAvatarFile" accept="image/*" style="display:none" onchange="onOcAvatarChange(event)">
-    </div>
-    <input class="text-input" id="ocName" placeholder="Nombre del OC *">
-    <input class="text-input" id="ocRole" placeholder="Rol (ej: Estudiante, Héroe)">
-    <input class="text-input" id="ocAppearance" placeholder="Apariencia (ej: pelo negro, ojos grises)">
-    <textarea class="text-area" id="ocPersonality" rows="2" placeholder="Personalidad..."></textarea>
-    <textarea class="text-area" id="ocLore" rows="2" placeholder="Trasfondo..."></textarea>
-    <div class="modal-ft">
-      <button class="btn-cancel" onclick="closeOcModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveOc()"><i class="fas fa-check"></i> Guardar OC</button>
+      <button class="btn-outline-full" onclick="newChatForChar()">
+        <i class="fas fa-plus"></i> Nueva conversación
+      </button>
+      <div class="history-list" id="historyList"></div>
     </div>
   </div>
-</div>
 
-<!-- ══ MODAL: HISTORIAL ══ -->
-<div class="modal hidden" id="historyModal">
-  <div class="modal-card">
-    <div class="modal-hd">
-      <h3>Conversaciones</h3>
-      <button class="icon-btn" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <button class="btn-outline-full" onclick="newChatForChar()">
-      <i class="fas fa-plus"></i> Nueva conversación
-    </button>
-    <div class="history-list" id="historyList"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL: EDITAR MENSAJE ══ -->
-<div class="modal hidden" id="editModal">
-  <div class="modal-card" style="max-width:460px">
-    <div class="modal-hd">
-      <h3>Editar mensaje</h3>
-      <button class="icon-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <textarea class="text-area" id="editContent" rows="4"></textarea>
-    <div class="modal-ft">
-      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
-      <button class="btn-primary" onclick="confirmEdit()"><i class="fas fa-check"></i> Guardar</button>
+  <!-- ══ MODAL: EDITAR MENSAJE ══ -->
+  <div class="modal hidden" id="editModal">
+    <div class="modal-card" style="max-width:460px">
+      <div class="modal-hd">
+        <h3>Editar mensaje</h3>
+        <button class="icon-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <textarea class="text-area" id="editContent" rows="4"></textarea>
+      <div class="modal-ft">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmEdit()"><i class="fas fa-check"></i> Guardar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ══ SWIPE TOAST (alternativas) ══ -->
-<div class="swipe-toast hidden" id="swipeToast">
-  <button onclick="retryLast()"><i class="fas fa-rotate-right"></i> Regenerar</button>
-</div>
+  <!-- ══ SWIPE TOAST (alternativas) ══ -->
+  <div class="swipe-toast hidden" id="swipeToast">
+    <button onclick="retryLast()"><i class="fas fa-rotate-right"></i> Regenerar</button>
+  </div>
 
-<!-- ══ TOAST ══ -->
-<div class="toast" id="toast"></div>
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast"></div>
 
-<script src="/static/script.js"></script>
+  <script src="/static/script.js"></script>
 </body>
+
 </html>
