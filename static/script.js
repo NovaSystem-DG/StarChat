@@ -434,19 +434,27 @@ async function confirmEdit() {
 }
 
 async function rewindTo(id) {
-  if (!confirm('¿Rebobinar a este punto? Se eliminarán este mensaje y todos los siguientes.')) return;
+  if (!confirm('¿Rebobinar a este punto? Los mensajes siguientes se eliminarán.')) return;
+
+  // Guardar el contenido del mensaje antes de rebobinar
+  const msg = messages.find(m => m.id === id);
+
   await api(`/api/chat/${currentChatId}/rewind/${id}`, 'POST');
-  // Add visual divider then reload
   const data = await api(`/api/chat/${currentChatId}/messages`);
   if (data) { messages = data.messages; }
 
   renderMessages();
-  // Add rewind line at end
-  const rl = document.createElement('div');
-  rl.className = 'rewind-line';
-  rl.innerHTML = '<i class="fas fa-rotate-left"></i> Rebobinado';
-  document.getElementById('messages').appendChild(rl);
-  showToast('Rebobinado ✓');
+
+  // Si era un mensaje del usuario, ponerlo de vuelta en el input
+  if (msg && msg.role === 'user') {
+    const inp = document.getElementById('msgInput');
+    inp.value = msg.content;
+    autoResize(inp);
+    inp.focus();
+    showToast('Rebobinado — edita y envía de nuevo ✓');
+  } else {
+    showToast('Rebobinado ✓');
+  }
 }
 
 async function retryFrom(id) {
