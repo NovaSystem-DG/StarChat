@@ -24,7 +24,7 @@ def _execute(statements):
                 elif isinstance(p, int):
                     args.append({"type": "integer", "value": str(p)})
                 elif isinstance(p, float):
-                    args.append({"type": "float", "value": str(p)})
+                    args.append({"type": "float", "value": p})
                 else:
                     args.append({"type": "text", "value": str(p)})
             payload["requests"].append({
