@@ -330,7 +330,7 @@ def rewind_to(chat_id, msg_id):
         chat = db.execute("SELECT id FROM chats WHERE id=? AND user_id=?", (chat_id, uid)).fetchone()
         if not chat:
             return jsonify({"error": "Not found"}), 404
-        db.execute("DELETE FROM messages WHERE chat_id=? AND id >= ?", (chat_id, msg_id))
+        db.execute("DELETE FROM messages WHERE chat_id=? AND id > ?", (chat_id, msg_id))
         db.commit()
     return jsonify({"status": "ok"})
 
@@ -476,6 +476,12 @@ def build_system_prompt(char, oc, nombre_usuario):
 [Main character: {nombre}]
 {char_info}{oc_block}{examples_block}
 
+[Universe knowledge]
+- You know the full canon of {nombre}'s universe — every character, location, faction, event, and relationship.
+- Other characters from the same universe can appear naturally when the moment calls for it, when {nombre_usuario} mentions them, or when the narrative demands it.
+- When canon characters appear, portray them accurately — their personality, speech, and relationships. Batman sounds like Batman. Oracle sounds like Oracle.
+- If {nombre_usuario} references a character or event from the universe, {nombre} already knows these people and events.
+
 [Formatting rules — ALWAYS follow these exactly]
 - Use *italics* (single asterisks) for actions, descriptions, and narration: *She glances up slowly, eyes cold.*
 - Use **Character Name:** before spoken dialogue: **{nombre}:** "Your words mean nothing to me."
@@ -488,16 +494,17 @@ def build_system_prompt(char, oc, nombre_usuario):
 - Show don't tell. "His jaw tightened" beats "He was angry."
 - Vary sentence rhythm. Short punches. Then a longer, breathing sentence that pulls the reader in.
 - Keep tight continuity — if something happened earlier, it stays happened. Characters who left are gone.
-- NPCs and background characters get consistent voices when they appear.
+- Every NPC and secondary character gets a consistent, accurate voice maintained throughout.
 - End each response at a natural pause that invites {nombre_usuario} to act.
 - 2 to 4 paragraphs per response. Rich but not overwhelming.
 
 [Hard rules]
 - NEVER break character or acknowledge being an AI.
 - NEVER write {nombre_usuario}'s lines, actions, or thoughts.
-- NEVER contradict established story events.
+- NEVER contradict established story events or canon.
 - NEVER start consecutive responses the same way.
 - NEVER ignore a (parenthetical instruction) — always follow it.
+- NEVER introduce a new character randomly — only when it makes narrative sense.
 
 The story is live. {nombre_usuario} is present. Write what happens next."""
 

@@ -3,19 +3,19 @@
 /* ─────────────────────────────────
    STATE
 ───────────────────────────────── */
-let chars = [];
-let ocs = [];
-let perfil = {};
+let chars       = [];
+let ocs         = [];
+let perfil      = {};
 let currentChar = null;
 let currentChatId = null;
-let messages = [];   // [{id, role, content, created_at}]
+let messages    = [];   // [{id, role, content, created_at}]
 let editingMsgId = null;
 let editingCharId = null;
-let editingOcId = null;
+let editingOcId  = null;
 let charAvatarB64 = '';
-let ocAvatarB64 = '';
+let ocAvatarB64   = '';
 let profileAvatarB64 = '';
-let isLoading = false;
+let isLoading   = false;
 let touchStartX = 0;
 let swipeHideTimer = null;
 
@@ -38,7 +38,7 @@ let swipeHideTimer = null;
 
   // Swipe gestures (mobile)
   document.addEventListener('touchstart', onTouchStart, { passive: true });
-  document.addEventListener('touchend', onTouchEnd, { passive: true });
+  document.addEventListener('touchend',   onTouchEnd,   { passive: true });
 })();
 
 /* ─────────────────────────────────
@@ -100,7 +100,7 @@ function charItem(c) {
     ? `background-image:url(${c.avatar})`
     : `background:var(--blue-dim)`;
   const avatarInner = c.avatar ? '' : `<span style="font-size:1.3rem">${getInitial(c.nombre)}</span>`;
-  const favBadge = c.favorito ? `<div class="fav-badge"><i class="fas fa-star"></i></div>` : '';
+  const favBadge    = c.favorito ? `<div class="fav-badge"><i class="fas fa-star"></i></div>` : '';
 
   div.innerHTML = `
     <div class="char-item-avatar" style="${avatarStyle}">
@@ -185,7 +185,7 @@ function setHeaderForChar(c) {
 
 function updateOcSub() {
   const ocSel = document.getElementById('ocSelect');
-  const ocId = ocSel.value;
+  const ocId  = ocSel.value;
   const oc = ocs.find(o => String(o.id) === ocId);
   const sub = oc ? `Jugando como ${oc.nombre}` : currentChar?.descripcion || 'Personaje de IA';
   document.getElementById('chatHeaderSub').textContent = sub;
@@ -229,7 +229,7 @@ function typewriterEffect(bubble, fullHtml, onDone) {
   temp.innerHTML = fullHtml;
   const plainText = temp.textContent || temp.innerText || '';
   const totalChars = plainText.length;
-
+  
   if (totalChars === 0) { bubble.innerHTML = fullHtml; if (onDone) onDone(); return; }
 
   let charIndex = 0;
@@ -523,7 +523,7 @@ function openCharModal() {
   editingCharId = null;
   charAvatarB64 = '';
   document.getElementById('charModalTitle').textContent = 'Nuevo personaje';
-  ['charName', 'charDesc', 'charGreeting', 'charPersonality', 'charLore', 'charSystemOverride', 'charExamples'].forEach(id => {
+  ['charName','charDesc','charGreeting','charPersonality','charLore','charSystemOverride','charExamples'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('charTemp').value = 0.92;
@@ -541,14 +541,14 @@ function editChar(id, e) {
   editingCharId = id;
   charAvatarB64 = c.avatar || '';
   document.getElementById('charModalTitle').textContent = 'Editar personaje';
-  document.getElementById('charName').value = c.nombre || '';
-  document.getElementById('charDesc').value = c.descripcion || '';
-  document.getElementById('charGreeting').value = c.greeting || '';
+  document.getElementById('charName').value      = c.nombre || '';
+  document.getElementById('charDesc').value      = c.descripcion || '';
+  document.getElementById('charGreeting').value  = c.greeting || '';
   document.getElementById('charPersonality').value = c.personalidad || '';
-  document.getElementById('charLore').value = c.historia || '';
+  document.getElementById('charLore').value      = c.historia || '';
   document.getElementById('charSystemOverride').value = c.system_override || '';
-  document.getElementById('charExamples').value = c.examples || '';
-  document.getElementById('charTemp').value = c.temperature || 0.92;
+  document.getElementById('charExamples').value  = c.examples || '';
+  document.getElementById('charTemp').value      = c.temperature || 0.92;
   document.getElementById('charTempVal').textContent = c.temperature || 0.92;
   document.getElementById('charMaxTokens').value = c.max_tokens || 600;
 
@@ -574,15 +574,15 @@ async function saveChar() {
   const payload = {
     id: editingCharId || undefined,
     nombre,
-    descripcion: document.getElementById('charDesc').value.trim(),
-    greeting: document.getElementById('charGreeting').value.trim(),
-    personalidad: document.getElementById('charPersonality').value.trim(),
-    historia: document.getElementById('charLore').value.trim(),
+    descripcion:    document.getElementById('charDesc').value.trim(),
+    greeting:       document.getElementById('charGreeting').value.trim(),
+    personalidad:   document.getElementById('charPersonality').value.trim(),
+    historia:       document.getElementById('charLore').value.trim(),
     systemOverride: document.getElementById('charSystemOverride').value.trim(),
-    examples: document.getElementById('charExamples').value.trim(),
-    avatar: charAvatarB64,
-    temperature: parseFloat(document.getElementById('charTemp').value),
-    maxTokens: parseInt(document.getElementById('charMaxTokens').value),
+    examples:       document.getElementById('charExamples').value.trim(),
+    avatar:         charAvatarB64,
+    temperature:    parseFloat(document.getElementById('charTemp').value),
+    maxTokens:      parseInt(document.getElementById('charMaxTokens').value),
   };
 
   const r = await api('/api/personajes', 'POST', payload);
@@ -657,9 +657,9 @@ function openCharMenu() {
   const menu = document.getElementById('charMenu');
   menu.classList.remove('hidden');
   const rect = btn.getBoundingClientRect();
-  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.top  = (rect.bottom + 6) + 'px';
   menu.style.right = (window.innerWidth - rect.right) + 'px';
-  menu.style.left = 'auto';
+  menu.style.left  = 'auto';
 }
 function hideDropdown() {
   document.getElementById('charMenu').classList.add('hidden');
@@ -790,17 +790,17 @@ function openOcModal(id = null) {
     if (!o) return;
     ocAvatarB64 = o.avatar || '';
     document.getElementById('ocModalTitle').textContent = 'Editar OC';
-    document.getElementById('ocName').value = o.nombre || '';
-    document.getElementById('ocRole').value = o.rol || '';
-    document.getElementById('ocAppearance').value = o.apariencia || '';
+    document.getElementById('ocName').value        = o.nombre || '';
+    document.getElementById('ocRole').value        = o.rol || '';
+    document.getElementById('ocAppearance').value  = o.apariencia || '';
     document.getElementById('ocPersonality').value = o.personalidad || '';
-    document.getElementById('ocLore').value = o.historia || '';
+    document.getElementById('ocLore').value        = o.historia || '';
     const prev = document.getElementById('ocAvatarPreview');
     if (o.avatar) { prev.style.backgroundImage = `url(${o.avatar})`; prev.innerHTML = ''; }
     else resetAvatarPreview('ocAvatarPreview', '<i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>');
   } else {
     document.getElementById('ocModalTitle').textContent = 'Nuevo OC';
-    ['ocName', 'ocRole', 'ocAppearance', 'ocPersonality', 'ocLore'].forEach(id => document.getElementById(id).value = '');
+    ['ocName','ocRole','ocAppearance','ocPersonality','ocLore'].forEach(id => document.getElementById(id).value = '');
     resetAvatarPreview('ocAvatarPreview', '<i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>');
   }
   openModal('ocModal');
@@ -814,11 +814,11 @@ async function saveOc() {
   const payload = {
     id: editingOcId || undefined,
     nombre,
-    rol: document.getElementById('ocRole').value.trim(),
-    apariencia: document.getElementById('ocAppearance').value.trim(),
+    rol:          document.getElementById('ocRole').value.trim(),
+    apariencia:   document.getElementById('ocAppearance').value.trim(),
     personalidad: document.getElementById('ocPersonality').value.trim(),
-    historia: document.getElementById('ocLore').value.trim(),
-    avatar: ocAvatarB64,
+    historia:     document.getElementById('ocLore').value.trim(),
+    avatar:       ocAvatarB64,
   };
   const r = await api('/api/ocs', 'POST', payload);
   if (r?.status === 'ok') {
