@@ -305,11 +305,98 @@ function buildBubble(m) {
 /* ─────────────────────────────────
    SEND MESSAGE
 ───────────────────────────────── */
+
+/* ─────────────────────────────────
+   BOT TRIGGER HELPERS
+───────────────────────────────── */
+async function triggerBotResponse(userContent) {
+  const ocId = document.getElementById('ocSelect').value || null;
+  const container = document.getElementById('messages');
+  const typing = document.createElement('div');
+  typing.className = 'typing-wrap';
+  typing.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  container.appendChild(typing);
+  container.scrollTop = container.scrollHeight;
+  setLoading(true);
+  try {
+    const r = await api(`/api/chat/${currentChatId}/send`, 'POST', {
+      content: userContent,
+      oc_id: ocId ? parseInt(ocId) : null
+    });
+    typing.remove();
+    if (r?.response) {
+      const data = await api(`/api/chat/${currentChatId}/messages`);
+      if (data) { messages = data.messages; renderMessagesWithTypewriter(); }
+      showSwipeToast();
+    }
+  } catch(e) { typing.remove(); showToast('Error al responder'); }
+  finally { setLoading(false); }
+}
+
+async function triggerBotContinue() {
+  const ocId = document.getElementById('ocSelect').value || null;
+  const container = document.getElementById('messages');
+  const typing = document.createElement('div');
+  typing.className = 'typing-wrap';
+  typing.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  container.appendChild(typing);
+  container.scrollTop = container.scrollHeight;
+  setLoading(true);
+  try {
+    const r = await api(`/api/chat/${currentChatId}/send`, 'POST', {
+      content: '*continúa*',
+      oc_id: ocId ? parseInt(ocId) : null
+    });
+    typing.remove();
+    if (r?.response) {
+      const data = await api(`/api/chat/${currentChatId}/messages`);
+      if (data) { messages = data.messages; renderMessagesWithTypewriter(); }
+      showSwipeToast();
+    }
+  } catch(e) { typing.remove(); showToast('Error al responder'); }
+  finally { setLoading(false); }
+}
+
+function renderMessagesWithTypewriter() {
+  const container = document.getElementById('messages');
+  const lastMsg = messages[messages.length - 1];
+  const prevMsgs = messages.slice(0, -1);
+  container.innerHTML = '';
+  if (currentChar?.greeting) {
+    const gb = document.createElement('div');
+    gb.className = 'greeting-bubble';
+    gb.innerHTML = `<div class="bubble-name">${esc(currentChar.nombre)}</div>${renderMarkdown(currentChar.greeting)}`;
+    container.appendChild(gb);
+  }
+  prevMsgs.forEach(m => container.appendChild(buildBubble(m)));
+  if (lastMsg && lastMsg.role === 'assistant') {
+    const wrap = buildBubble(lastMsg);
+    container.appendChild(wrap);
+    const bubble = wrap.querySelector('.bubble.bot');
+    if (bubble) {
+      const nameDiv = bubble.querySelector('.bubble-name');
+      const timeDiv = bubble.querySelector('.bubble-time');
+      const fullHtml = renderMarkdown(lastMsg.content);
+      bubble.innerHTML = '';
+      if (nameDiv) bubble.appendChild(nameDiv);
+      const contentSpan = document.createElement('span');
+      bubble.appendChild(contentSpan);
+      if (timeDiv) bubble.appendChild(timeDiv);
+      typewriterEffect(contentSpan, fullHtml, null);
+    }
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
 async function sendMessage() {
   if (isLoading || !currentChatId) return;
   const inp = document.getElementById('msgInput');
   const content = inp.value.trim();
-  if (!content) return;
+  // Empty message = ask bot to continue the story
+  if (!content) {
+    await triggerBotContinue();
+    return;
+  }
 
   inp.value = '';
   autoResize(inp);
@@ -436,7 +523,6 @@ async function confirmEdit() {
 async function rewindTo(id) {
   if (!confirm('¿Rebobinar a este punto? Los mensajes siguientes se eliminarán.')) return;
 
-  // Guardar el contenido del mensaje antes de rebobinar
   const msg = messages.find(m => m.id === id);
 
   await api(`/api/chat/${currentChatId}/rewind/${id}`, 'POST');
@@ -444,16 +530,15 @@ async function rewindTo(id) {
   if (data) { messages = data.messages; }
 
   renderMessages();
+  showToast('Rebobinado ✓');
 
-  // Si era un mensaje del usuario, ponerlo de vuelta en el input
+  // Auto-trigger bot response based on last user message
   if (msg && msg.role === 'user') {
-    const inp = document.getElementById('msgInput');
-    inp.value = msg.content;
-    autoResize(inp);
-    inp.focus();
-    showToast('Rebobinado — edita y envía de nuevo ✓');
+    await triggerBotResponse(msg.content);
   } else {
-    showToast('Rebobinado ✓');
+    // If rewound to a bot message, find last user message and regenerate
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUser) await triggerBotResponse(lastUser.content);
   }
 }
 

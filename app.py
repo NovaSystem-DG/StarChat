@@ -361,9 +361,12 @@ def send_message(chat_id):
         perfil = db.execute("SELECT nombre FROM users WHERE id=?", (uid,)).fetchone()
         nombre_usuario = (oc["nombre"] if oc else None) or perfil["nombre"] or "Tú"
 
-        # Guardar mensaje del usuario
-        db.execute("INSERT INTO messages (chat_id, role, content) VALUES (?,?,?)",
-                   (chat_id, "user", user_content))
+        is_continue = user_content == '*continúa*'
+
+        # Guardar mensaje del usuario (excepto si es una continuación silenciosa)
+        if not is_continue:
+            db.execute("INSERT INTO messages (chat_id, role, content) VALUES (?,?,?)",
+                       (chat_id, "user", user_content))
 
         # Historial (últimos 24 mensajes para contexto)
         history = db.execute(
@@ -506,7 +509,10 @@ def build_system_prompt(char, oc, nombre_usuario):
 - NEVER ignore a (parenthetical instruction) — always follow it.
 - NEVER introduce a new character randomly — only when it makes narrative sense.
 
-The story is live. {nombre_usuario} is present. Write what happens next."""
+The story is live. {nombre_usuario} is present. Write what happens next.
+
+[Special instruction]
+If the last user message is exactly '*continúa*', it means the user wants YOU to advance the story on your own — write the next scene, move time forward, introduce something interesting, or develop the tension. Do not wait for the user to act."""
 
     return prompt
 
