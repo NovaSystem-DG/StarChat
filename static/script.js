@@ -321,7 +321,8 @@ async function triggerBotResponse(userContent) {
   try {
     const r = await api(`/api/chat/${currentChatId}/send`, 'POST', {
       content: userContent,
-      oc_id: ocId ? parseInt(ocId) : null
+      oc_id: ocId ? parseInt(ocId) : null,
+      _skip_user_save: true // el mensaje del usuario ya existe en la BD (viene de un rewind), no volver a guardarlo
     });
     typing.remove();
     if (r?.response) {
@@ -580,7 +581,8 @@ async function retryLast() {
     const r = await api(`/api/chat/${currentChatId}/send`, 'POST', {
       content: lastUser.content,
       oc_id: ocId ? parseInt(ocId) : null,
-      _retry: true
+      _retry: true,
+      _skip_user_save: true // lastUser.content ya está guardado en la BD, no duplicarlo
     });
     typing.remove();
     if (r?.response) {
