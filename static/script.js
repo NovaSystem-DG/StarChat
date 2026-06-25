@@ -3,19 +3,19 @@
 /* ─────────────────────────────────
    STATE
 ───────────────────────────────── */
-let chars       = [];
-let ocs         = [];
-let perfil      = {};
+let chars = [];
+let ocs = [];
+let perfil = {};
 let currentChar = null;
 let currentChatId = null;
-let messages    = [];   // [{id, role, content, created_at}]
+let messages = [];   // [{id, role, content, created_at}]
 let editingMsgId = null;
 let editingCharId = null;
-let editingOcId  = null;
+let editingOcId = null;
 let charAvatarB64 = '';
-let ocAvatarB64   = '';
+let ocAvatarB64 = '';
 let profileAvatarB64 = '';
-let isLoading   = false;
+let isLoading = false;
 let touchStartX = 0;
 let swipeHideTimer = null;
 
@@ -29,16 +29,9 @@ let swipeHideTimer = null;
   renderOcSelect();
   updateUserAvatar();
 
-  // Close dropdown on outside click
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#charMenu') && !e.target.closest('.icon-btn[onclick*="openCharMenu"]')) {
-      hideDropdown();
-    }
-  });
-
   // Swipe gestures (mobile)
   document.addEventListener('touchstart', onTouchStart, { passive: true });
-  document.addEventListener('touchend',   onTouchEnd,   { passive: true });
+  document.addEventListener('touchend', onTouchEnd, { passive: true });
 })();
 
 /* ─────────────────────────────────
@@ -100,7 +93,7 @@ function charItem(c) {
     ? `background-image:url(${c.avatar})`
     : `background:var(--blue-dim)`;
   const avatarInner = c.avatar ? '' : `<span style="font-size:1.3rem">${getInitial(c.nombre)}</span>`;
-  const favBadge    = c.favorito ? `<div class="fav-badge"><i class="fas fa-star"></i></div>` : '';
+  const favBadge = c.favorito ? `<div class="fav-badge"><i class="fas fa-star"></i></div>` : '';
 
   div.innerHTML = `
     <div class="char-item-avatar" style="${avatarStyle}">
@@ -185,7 +178,7 @@ function setHeaderForChar(c) {
 
 function updateOcSub() {
   const ocSel = document.getElementById('ocSelect');
-  const ocId  = ocSel.value;
+  const ocId = ocSel.value;
   const oc = ocs.find(o => String(o.id) === ocId);
   const sub = oc ? `Jugando como ${oc.nombre}` : currentChar?.descripcion || 'Personaje de IA';
   document.getElementById('chatHeaderSub').textContent = sub;
@@ -229,7 +222,7 @@ function typewriterEffect(bubble, fullHtml, onDone) {
   temp.innerHTML = fullHtml;
   const plainText = temp.textContent || temp.innerText || '';
   const totalChars = plainText.length;
-  
+
   if (totalChars === 0) { bubble.innerHTML = fullHtml; if (onDone) onDone(); return; }
 
   let charIndex = 0;
@@ -330,7 +323,7 @@ async function triggerBotResponse(userContent) {
       if (data) { messages = data.messages; renderMessagesWithTypewriter(); }
       showSwipeToast();
     }
-  } catch(e) { typing.remove(); showToast('Error al responder'); }
+  } catch (e) { typing.remove(); showToast('Error al responder'); }
   finally { setLoading(false); }
 }
 
@@ -354,7 +347,7 @@ async function triggerBotContinue() {
       if (data) { messages = data.messages; renderMessagesWithTypewriter(); }
       showSwipeToast();
     }
-  } catch(e) { typing.remove(); showToast('Error al responder'); }
+  } catch (e) { typing.remove(); showToast('Error al responder'); }
   finally { setLoading(false); }
 }
 
@@ -618,7 +611,7 @@ function openCharModal() {
   editingCharId = null;
   charAvatarB64 = '';
   document.getElementById('charModalTitle').textContent = 'Nuevo personaje';
-  ['charName','charDesc','charGreeting','charPersonality','charLore','charSystemOverride','charExamples'].forEach(id => {
+  ['charName', 'charDesc', 'charGreeting', 'charPersonality', 'charLore', 'charSystemOverride', 'charExamples'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('charTemp').value = 0.92;
@@ -636,14 +629,14 @@ function editChar(id, e) {
   editingCharId = id;
   charAvatarB64 = c.avatar || '';
   document.getElementById('charModalTitle').textContent = 'Editar personaje';
-  document.getElementById('charName').value      = c.nombre || '';
-  document.getElementById('charDesc').value      = c.descripcion || '';
-  document.getElementById('charGreeting').value  = c.greeting || '';
+  document.getElementById('charName').value = c.nombre || '';
+  document.getElementById('charDesc').value = c.descripcion || '';
+  document.getElementById('charGreeting').value = c.greeting || '';
   document.getElementById('charPersonality').value = c.personalidad || '';
-  document.getElementById('charLore').value      = c.historia || '';
+  document.getElementById('charLore').value = c.historia || '';
   document.getElementById('charSystemOverride').value = c.system_override || '';
-  document.getElementById('charExamples').value  = c.examples || '';
-  document.getElementById('charTemp').value      = c.temperature || 0.92;
+  document.getElementById('charExamples').value = c.examples || '';
+  document.getElementById('charTemp').value = c.temperature || 0.92;
   document.getElementById('charTempVal').textContent = c.temperature || 0.92;
   document.getElementById('charMaxTokens').value = c.max_tokens || 600;
 
@@ -656,7 +649,7 @@ function editChar(id, e) {
 }
 
 function editCurrentChar() {
-  hideDropdown();
+  closeCharPanel();
   if (currentChar) editChar(currentChar.id, null);
 }
 
@@ -669,15 +662,15 @@ async function saveChar() {
   const payload = {
     id: editingCharId || undefined,
     nombre,
-    descripcion:    document.getElementById('charDesc').value.trim(),
-    greeting:       document.getElementById('charGreeting').value.trim(),
-    personalidad:   document.getElementById('charPersonality').value.trim(),
-    historia:       document.getElementById('charLore').value.trim(),
+    descripcion: document.getElementById('charDesc').value.trim(),
+    greeting: document.getElementById('charGreeting').value.trim(),
+    personalidad: document.getElementById('charPersonality').value.trim(),
+    historia: document.getElementById('charLore').value.trim(),
     systemOverride: document.getElementById('charSystemOverride').value.trim(),
-    examples:       document.getElementById('charExamples').value.trim(),
-    avatar:         charAvatarB64,
-    temperature:    parseFloat(document.getElementById('charTemp').value),
-    maxTokens:      parseInt(document.getElementById('charMaxTokens').value),
+    examples: document.getElementById('charExamples').value.trim(),
+    avatar: charAvatarB64,
+    temperature: parseFloat(document.getElementById('charTemp').value),
+    maxTokens: parseInt(document.getElementById('charMaxTokens').value),
   };
 
   const r = await api('/api/personajes', 'POST', payload);
@@ -711,7 +704,7 @@ async function deleteChar(id, e) {
 }
 
 async function deleteCurrentChar() {
-  hideDropdown();
+  closeCharPanel();
   if (currentChar) await deleteChar(currentChar.id, null);
 }
 
@@ -745,25 +738,9 @@ function onCharAvatarChange(e) {
 }
 
 /* ─────────────────────────────────
-   CHAR MENU DROPDOWN
+   PANEL: CONVERSACIONES (izquierda, deslizable)
 ───────────────────────────────── */
-function openCharMenu() {
-  const btn = document.querySelector('.icon-btn[onclick*="openCharMenu"]');
-  const menu = document.getElementById('charMenu');
-  menu.classList.remove('hidden');
-  const rect = btn.getBoundingClientRect();
-  menu.style.top  = (rect.bottom + 6) + 'px';
-  menu.style.right = (window.innerWidth - rect.right) + 'px';
-  menu.style.left  = 'auto';
-}
-function hideDropdown() {
-  document.getElementById('charMenu').classList.add('hidden');
-}
-
-/* ─────────────────────────────────
-   CHAT HISTORY
-───────────────────────────────── */
-async function openChatHistory() {
+async function openChatsPanel() {
   if (!currentChar) return;
   const chatList = await api(`/api/chats/${currentChar.id}`);
   const container = document.getElementById('historyList');
@@ -783,11 +760,16 @@ async function openChatHistory() {
       </button>`;
     container.appendChild(item);
   });
-  openModal('historyModal');
+  document.getElementById('chatsOverlay').classList.remove('hidden');
+  document.getElementById('chatsPanel').classList.remove('hidden');
+}
+function closeChatsPanel() {
+  document.getElementById('chatsOverlay').classList.add('hidden');
+  document.getElementById('chatsPanel').classList.add('hidden');
 }
 
 async function selectChat(id) {
-  closeHistoryModal();
+  closeChatsPanel();
   await loadChat(id);
 }
 
@@ -805,14 +787,12 @@ async function deleteChatFromHistory(id) {
       document.getElementById('messages').appendChild(gb);
     }
   }
-  await openChatHistory(); // refresh
+  await openChatsPanel(); // refresh
 }
 
-function closeHistoryModal() { closeModal('historyModal'); }
-
 async function newChatForChar() {
-  closeHistoryModal();
-  hideDropdown();
+  closeChatsPanel();
+  closeCharPanel();
   if (!currentChar) return;
   const r = await api(`/api/chats/${currentChar.id}/new`, 'POST', { title: 'Nueva conversación' });
   if (r?.id) {
@@ -821,8 +801,34 @@ async function newChatForChar() {
   }
 }
 
+/* ─────────────────────────────────
+   PANEL: AJUSTES DEL PERSONAJE (derecha, deslizable)
+───────────────────────────────── */
+function openCharPanel() {
+  if (!currentChar) return;
+
+  // Resumen del personaje
+  const avatarEl = document.getElementById('charPanelAvatar');
+  if (currentChar.avatar) {
+    avatarEl.style.backgroundImage = `url(${currentChar.avatar})`;
+    avatarEl.innerHTML = '';
+  } else {
+    avatarEl.style.backgroundImage = '';
+    avatarEl.innerHTML = `<span>${getInitial(currentChar.nombre)}</span>`;
+  }
+  document.getElementById('charPanelName').textContent = currentChar.nombre || '';
+  document.getElementById('charPanelDesc').textContent = currentChar.descripcion || '';
+
+  document.getElementById('charPanelOverlay').classList.remove('hidden');
+  document.getElementById('charPanel').classList.remove('hidden');
+}
+function closeCharPanel() {
+  document.getElementById('charPanelOverlay').classList.add('hidden');
+  document.getElementById('charPanel').classList.add('hidden');
+}
+
 async function clearCurrentChat() {
-  hideDropdown();
+  closeCharPanel();
   if (!currentChatId) return;
   if (!confirm('¿Vaciar el chat? Se eliminarán todos los mensajes.')) return;
   await api(`/api/chat/${currentChatId}/clear`, 'POST');
@@ -885,17 +891,17 @@ function openOcModal(id = null) {
     if (!o) return;
     ocAvatarB64 = o.avatar || '';
     document.getElementById('ocModalTitle').textContent = 'Editar OC';
-    document.getElementById('ocName').value        = o.nombre || '';
-    document.getElementById('ocRole').value        = o.rol || '';
-    document.getElementById('ocAppearance').value  = o.apariencia || '';
+    document.getElementById('ocName').value = o.nombre || '';
+    document.getElementById('ocRole').value = o.rol || '';
+    document.getElementById('ocAppearance').value = o.apariencia || '';
     document.getElementById('ocPersonality').value = o.personalidad || '';
-    document.getElementById('ocLore').value        = o.historia || '';
+    document.getElementById('ocLore').value = o.historia || '';
     const prev = document.getElementById('ocAvatarPreview');
     if (o.avatar) { prev.style.backgroundImage = `url(${o.avatar})`; prev.innerHTML = ''; }
     else resetAvatarPreview('ocAvatarPreview', '<i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>');
   } else {
     document.getElementById('ocModalTitle').textContent = 'Nuevo OC';
-    ['ocName','ocRole','ocAppearance','ocPersonality','ocLore'].forEach(id => document.getElementById(id).value = '');
+    ['ocName', 'ocRole', 'ocAppearance', 'ocPersonality', 'ocLore'].forEach(id => document.getElementById(id).value = '');
     resetAvatarPreview('ocAvatarPreview', '<i class="fas fa-user" style="font-size:1.8rem;color:var(--text3)"></i>');
   }
   openModal('ocModal');
@@ -909,11 +915,11 @@ async function saveOc() {
   const payload = {
     id: editingOcId || undefined,
     nombre,
-    rol:          document.getElementById('ocRole').value.trim(),
-    apariencia:   document.getElementById('ocAppearance').value.trim(),
+    rol: document.getElementById('ocRole').value.trim(),
+    apariencia: document.getElementById('ocAppearance').value.trim(),
     personalidad: document.getElementById('ocPersonality').value.trim(),
-    historia:     document.getElementById('ocLore').value.trim(),
-    avatar:       ocAvatarB64,
+    historia: document.getElementById('ocLore').value.trim(),
+    avatar: ocAvatarB64,
   };
   const r = await api('/api/ocs', 'POST', payload);
   if (r?.status === 'ok') {

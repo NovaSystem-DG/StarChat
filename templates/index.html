@@ -55,28 +55,19 @@
         <!-- Chat header -->
         <div class="chat-header">
           <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+          <button class="icon-btn" onclick="openChatsPanel()" title="Conversaciones"><i
+              class="fas fa-bars"></i></button>
           <div class="chat-header-avatar" id="chatHeaderAvatar"></div>
-          <div class="chat-header-info" onclick="openChatHistory()">
+          <div class="chat-header-info" onclick="openCharPanel()">
             <div class="chat-header-name" id="chatHeaderName"></div>
             <div class="chat-header-sub" id="chatHeaderSub"></div>
           </div>
           <div class="chat-header-actions">
             <button class="icon-btn" id="favBtn" onclick="toggleFav()" title="Favorito"><i
                 class="fas fa-star"></i></button>
-            <button class="icon-btn" onclick="openChatHistory()" title="Conversaciones"><i
-                class="fas fa-clock-rotate-left"></i></button>
-            <button class="icon-btn" onclick="openCharMenu()" title="Más opciones"><i
+            <button class="icon-btn" onclick="openCharPanel()" title="Más opciones"><i
                 class="fas fa-ellipsis-vertical"></i></button>
           </div>
-        </div>
-
-        <!-- OC bar -->
-        <div class="oc-bar" id="ocBar">
-          <i class="fas fa-user-circle" style="color:var(--text3);font-size:.85rem;"></i>
-          <label>Jugar como:</label>
-          <select id="ocSelect" onchange="onOcChange()">
-            <option value="">Yo mismo</option>
-          </select>
         </div>
 
         <!-- Messages -->
@@ -94,12 +85,57 @@
     </div>
   </div>
 
-  <!-- ══ CHAR MENU DROPDOWN ══ -->
-  <div class="dropdown hidden" id="charMenu">
-    <button onclick="editCurrentChar()"><i class="fas fa-pen"></i> Editar personaje</button>
-    <button onclick="clearCurrentChat()"><i class="fas fa-broom"></i> Vaciar chat</button>
-    <button onclick="newChatForChar()"><i class="fas fa-plus"></i> Nueva conversación</button>
-    <button class="danger" onclick="deleteCurrentChar()"><i class="fas fa-trash"></i> Eliminar personaje</button>
+  <!-- ══ PANEL: CONVERSACIONES (deslizable, izquierda) ══ -->
+  <div class="overlay hidden" id="chatsOverlay" onclick="closeChatsPanel()"></div>
+  <div class="side-panel side-panel-left hidden" id="chatsPanel">
+    <div class="sp-header">
+      <h3>Conversaciones</h3>
+      <button class="icon-btn" onclick="closeChatsPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sp-body">
+      <button class="btn-outline-full" onclick="newChatForChar()">
+        <i class="fas fa-plus"></i> Nueva conversación
+      </button>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: AJUSTES DEL PERSONAJE (deslizable, derecha) ══ -->
+  <div class="overlay hidden" id="charPanelOverlay" onclick="closeCharPanel()"></div>
+  <div class="side-panel side-panel-right hidden" id="charPanel">
+    <div class="sp-header">
+      <h3>Personaje</h3>
+      <button class="icon-btn" onclick="closeCharPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sp-body">
+      <!-- Resumen del personaje -->
+      <div class="char-panel-summary">
+        <div class="char-panel-avatar" id="charPanelAvatar"></div>
+        <div class="char-panel-name" id="charPanelName"></div>
+        <div class="char-panel-desc" id="charPanelDesc"></div>
+      </div>
+
+      <!-- Jugar como (OC) -->
+      <div class="sp-section-label">Jugar como</div>
+      <select class="text-input" id="ocSelect" onchange="onOcChange()">
+        <option value="">Yo mismo</option>
+      </select>
+
+      <!-- Acciones -->
+      <div class="sp-section-label" style="margin-top:18px">Acciones</div>
+      <button class="btn-outline-full" onclick="editCurrentChar()">
+        <i class="fas fa-pen"></i> Editar personaje
+      </button>
+      <button class="btn-outline-full" onclick="newChatForChar()">
+        <i class="fas fa-plus"></i> Nueva conversación
+      </button>
+      <button class="btn-outline-full" onclick="clearCurrentChat()">
+        <i class="fas fa-broom"></i> Vaciar chat
+      </button>
+      <button class="btn-danger-soft" onclick="deleteCurrentChar()">
+        <i class="fas fa-trash"></i> Eliminar personaje
+      </button>
+    </div>
   </div>
 
   <!-- ══ SETTINGS PANEL ══ -->
@@ -237,20 +273,6 @@
         <button class="btn-cancel" onclick="closeOcModal()">Cancelar</button>
         <button class="btn-primary" onclick="saveOc()"><i class="fas fa-check"></i> Guardar OC</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ══ MODAL: HISTORIAL ══ -->
-  <div class="modal hidden" id="historyModal">
-    <div class="modal-card">
-      <div class="modal-hd">
-        <h3>Conversaciones</h3>
-        <button class="icon-btn" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
-      </div>
-      <button class="btn-outline-full" onclick="newChatForChar()">
-        <i class="fas fa-plus"></i> Nueva conversación
-      </button>
-      <div class="history-list" id="historyList"></div>
     </div>
   </div>
 

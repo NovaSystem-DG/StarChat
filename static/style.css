@@ -351,37 +351,6 @@ body {
   gap: 2px;
 }
 
-/* OC bar */
-.oc-bar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.oc-bar label {
-  font-size: 11px;
-  color: var(--text3);
-  white-space: nowrap;
-}
-.oc-bar select {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 12px;
-  outline: none;
-  cursor: pointer;
-}
-.oc-bar select:focus {
-  border-color: var(--blue);
-}
-
 /* Messages area */
 .messages {
   flex: 1;
@@ -863,7 +832,8 @@ input[type="range"] {
 }
 
 /* ═══════════════════════════════════
-   SETTINGS PANEL (slide-in)
+   SIDE PANELS (slide-in) — Ajustes, Conversaciones, Personaje
+   Patrón genérico reutilizable: overlay + panel fijo a un lado
 ═══════════════════════════════════ */
 .overlay {
   position: fixed;
@@ -872,27 +842,50 @@ input[type="range"] {
   z-index: 200;
   backdrop-filter: blur(3px);
 }
+
+.side-panel,
 .settings-panel {
   position: fixed;
   top: 0;
-  left: 0;
   bottom: 0;
   width: 340px;
   max-width: 100%;
   background: var(--panel-l);
-  border-right: 1px solid var(--border);
   z-index: 201;
   display: flex;
   flex-direction: column;
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.settings-panel.hidden {
+
+/* Variante izquierda (Ajustes de usuario, Conversaciones) */
+.settings-panel,
+.side-panel-left {
+  left: 0;
+  border-right: 1px solid var(--border);
+}
+.settings-panel.hidden,
+.side-panel-left.hidden {
   transform: translateX(-100%);
   display: flex !important;
 }
-.settings-panel:not(.hidden) {
+.settings-panel:not(.hidden),
+.side-panel-left:not(.hidden) {
   transform: none;
 }
+
+/* Variante derecha (Ajustes de personaje) */
+.side-panel-right {
+  right: 0;
+  border-left: 1px solid var(--border);
+}
+.side-panel-right.hidden {
+  transform: translateX(100%);
+  display: flex !important;
+}
+.side-panel-right:not(.hidden) {
+  transform: none;
+}
+
 .sp-header {
   display: flex;
   align-items: center;
@@ -938,6 +931,41 @@ input[type="range"] {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+/* Resumen del personaje dentro del panel de ajustes (derecha) */
+.char-panel-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.char-panel-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--blue-dim) center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+.char-panel-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.char-panel-desc {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
 }
 
 /* OC card in settings */
@@ -1170,11 +1198,6 @@ label {
   flex-direction: column;
   gap: 7px;
   margin-top: 4px;
-  max-height: 55dvh;
-  overflow-y: auto;
-}
-.history-list::-webkit-scrollbar {
-  width: 3px;
 }
 .history-item {
   background: var(--surface);
@@ -1228,68 +1251,6 @@ label {
 .history-del:hover {
   color: var(--danger);
   background: rgba(239, 68, 68, 0.1);
-}
-
-/* ═══════════════════════════════════
-   DROPDOWN MENU
-═══════════════════════════════════ */
-.dropdown {
-  position: fixed;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  padding: 6px;
-  z-index: 400;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  min-width: 190px;
-  animation: dropIn 0.15s ease;
-}
-@keyframes dropIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.dropdown.hidden {
-  display: none;
-}
-.dropdown button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--text2);
-  padding: 9px 12px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.15s;
-  text-align: left;
-}
-.dropdown button:hover {
-  background: var(--surface3);
-  color: var(--text);
-}
-.dropdown button.danger {
-  color: #fca5a5;
-}
-.dropdown button.danger:hover {
-  background: rgba(239, 68, 68, 0.12);
-}
-.dropdown button i {
-  width: 16px;
-  color: var(--text3);
-  font-size: 0.85rem;
-}
-.dropdown button.danger i {
-  color: #fca5a5;
 }
 
 /* ═══════════════════════════════════
@@ -1421,7 +1382,8 @@ label {
   .input-wrap-area {
     padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
-  .settings-panel {
+  .settings-panel,
+  .side-panel {
     width: 100%;
   }
 }
